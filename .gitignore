@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*$py.class
+modules/flask/migrations
+env/
+.env
+outputs/

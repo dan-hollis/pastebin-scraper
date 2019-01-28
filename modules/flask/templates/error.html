@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Error</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet" media="screen">
+	</head>
+	<body>
+		<h1>Unhandled Error Occured</h1>
+		<br>
+		{% for error in errors %}
+			<p>{{ error }}</p>
+		{% endfor %}
+		<br><br>
+		<a href="/" class="btn btn-default">Return to Pastebin Scraper</a>
+		<br><br>
+		<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	</body>
+</html>
