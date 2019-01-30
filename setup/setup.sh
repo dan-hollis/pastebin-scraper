@@ -51,22 +51,28 @@ echo -e "${YELLOW}[*] Setting up the database...${RESET}"
 cd ~postgres/
 check_database=$(sudo -u postgres psql -c "\\l" | grep pastebin_scraper)
 if [ ! -z "$check_database" ]; then
-	echo -e "${BOLD}${RED}[!] Database ${RESET}pastebin_scraper ${BOLD}${RED}already exists.${RESET}"
-	echo -e "${BOLD}${RED}[!] Running this script will delete the existing database and remove all data.${RESET}"
-	echo;read -p "Press [enter] to continue, or anything else to quit: " continue_setup
-	if [ ! -z "$continue_setup" ]; then
-		exit
-	else
-		read -p "Press [enter] to confirm, or anything else to quit: " confirm_continue_setup
-		if [ ! -z "$confirm_continue_setup" ]; then
-			exit
+	continue_setup=""
+	while [ -z "$continue_setup" ]; do
+		echo;echo -e "${BOLD}${RED}[!] Database ${RESET}pastebin_scraper ${BOLD}${RED}already exists.${RESET}"
+		echo -e "${BOLD}${YELLOW}[?] Do you want to wipe the database before continuing setup?${RESET}"
+		read -p "(y/n): " continue_setup
+		if [ "$continue_setup" = "y" ]; then
+			sudo -u postgres psql -c "drop database pastebin_scraper" >/dev/null 2>&1
+			sudo -u postgres psql -c "create database pastebin_scraper" >/dev/null 2>&1
+			sudo -u postgres psql -c "create user scraper with encrypted password '$password'" >/dev/null 2>&1
+			sudo -u postgres psql -c "grant all privileges on database pastebin_scraper to scraper" >/dev/null 2>&1
+		elif [ "$continue_setup" = "n" ]; then
+			break
+		else
+			continue_setup=""
 		fi
-	fi
+	done
+else
+	sudo -u postgres psql -c "drop database pastebin_scraper" >/dev/null 2>&1
+	sudo -u postgres psql -c "create database pastebin_scraper" >/dev/null 2>&1
+	sudo -u postgres psql -c "create user scraper with encrypted password '$password'" >/dev/null 2>&1
+	sudo -u postgres psql -c "grant all privileges on database pastebin_scraper to scraper" >/dev/null 2>&1
 fi
-sudo -u postgres psql -c "drop database pastebin_scraper" >/dev/null 2>&1
-sudo -u postgres psql -c "create database pastebin_scraper" >/dev/null 2>&1
-sudo -u postgres psql -c "create user scraper with encrypted password '$password'" >/dev/null 2>&1
-sudo -u postgres psql -c "grant all privileges on database pastebin_scraper to scraper" >/dev/null 2>&1
 echo -e "${GREEN}[*] Done${RESET}";echo
 
 # Make sure pip is set up properly
