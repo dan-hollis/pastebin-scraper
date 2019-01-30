@@ -12,9 +12,23 @@
 					<h1>Pastebin Scraper</h1>
 					<br>
 					<form role="form" method="POST" action="/">
-						<b>Blank input will list current projects</b>
 						<div class="form-group">
-							<input type="text" name="searchProject" class="form-control" id="searchProject-box" placeholder="Search by project name..." style="max-width: 300px;">
+							<b>Search for a project</b>
+							<input type="text" name="searchProject" class="form-control" id="searchProject-box" placeholder="Enter project name" style="max-width: 300px;">
+						</div>
+						<b>Other search options</b>
+						<br>
+						<div class="form-check">
+							<input class="form-check-input" type="radio" name="otherSearchRadio" id="listProject-box" value="listProject" checked>
+							<label class="form-check-label" for="listProject-box">
+								List Projects
+							</label>
+						</div>
+						<div class="form-check">
+							<input class="form-check-input" type="radio" name="otherSearchRadio" id="listCrossKw-box" value="listCrossKw">
+							<label class="form-check-label" for="listCrossKw-box">
+								List Cross Project Keywords
+							</label>
 						</div>
 						<button type="submit" class="btn btn-primary">Submit</button>
 					</form>
@@ -27,6 +41,40 @@
 						{% endfor %}
 					{% endif %}
 					<br>
+					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#deleteCollapse" aria-expanded="false" aria-controls="deleteCollapse">Change project status</button>
+					<div class="collapse" id="deleteCollapse">
+						<div class="card card-body">
+							<form role="form" method="POST" action="/">
+								<div class="form-group">
+									<br>
+									<b>Project Name</b>
+									<br>
+									<input type="text" name="delProjName" class="form-control" id="delProjName-box" placeholder="Enter project name" style="max-width: 300px;">
+									<br>
+									<div class="form-check">
+										<input class="form-check-input" type="radio" name="delRemRadio" id="deleteProject-box" value="delete">
+										<label class="form-check-label" for="deleteProject-box">
+											Remove (delete from database)
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="radio" name="delRemRadio" id="deactivateProject-box" value="deactivate">
+										<label class="form-check-label" for="deactivateProject-box">
+											Deactivate (project won't be updated)
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="radio" name="delRemRadio" id="reactivateProject-box" value="reactivate" checked>
+										<label class="form-check-label" for="reactivateProject-box">
+											Reactivate (resume updating project)
+										</label>
+									</div>
+								</div>
+								<button type="submit" class="btn btn-primary">Submit</button>
+							</form>
+						</div>
+					</div>
+					<br><br>
 					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#outputCollapse" aria-expanded="false" aria-controls="outputCollapse">Output project data</button>
 					<div class="collapse" id="outputCollapse">
 						<div class="card card-body">
@@ -35,12 +83,16 @@
 									<label for="outputProject">Project name</label>
 									<input type="text" name="outputProject" class="form-control" id="outputProject-box" placeholder="Enter project name" style="max-width: 300px;">
 								</div>
+								<b>Output types</b>
 								<div class="form-group">
-									<label for="outputType">Output Type</label>
-									<br>
-									<b>Available options:</b> csv, json
-									<br>
-									<input type="text" name="outputType" class="form-control" id="outputType-box" placeholder="Enter type seperated by commas" style="max-width: 300px;">
+										<div class="form-check">
+											<input type="checkbox" class="form-check-input" id="csv" name="csv">
+											<label class="form-check-label" for="csv">CSV</label>
+										</div>
+										<div class="form-check">
+											<input type="checkbox" class="form-check-input" id="json" name="json">
+											<label class="form-check-label" for="json">JSON</label>
+										</div>
 								</div>
 								<div class="form-group">
 									<label for="outputDir">Output Directory</label>
@@ -49,7 +101,7 @@
 									<br>
 									If 'env' setting in the [flask] section of config.ini is set to 'prod', outputs will only be created in /var/www/pastebin-scraper/outputs/project_name
 									<br>
-									Defaults to pastebin-scraper/outputs if 'env' is set to 'dev'
+									Defaults to pastebin-scraper/outputs/project_name if 'env' is set to 'dev'
 									<br>
 								</div>
 								<button type="submit" class="btn btn-primary">Submit</button>
@@ -91,78 +143,24 @@
 					<div class="collapse" id="updateCollapse">
 						<div class="card card-body">
 							<form role="form" method="POST" action="/">
-								<div class="form-group">
-									<label for="updateProject">Project name</label>
-									<input type="text" name="updateProject" class="form-control" id="updateProject-box" placeholder="Enter project name" style="max-width: 300px;">
-								</div>
-								<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#addCollapse" aria-expanded="false" aria-controls="addCollapse">Add keywords to project</button>
-								<div class="collapse" id="addCollapse">
 									<div class="form-group">
-										<label for="addKeywords">Add Keywords</label>
+										<label for="updateProject">Project name</label>
+										<input type="text" name="updateProject" class="form-control" id="updateProject-box" placeholder="Enter project name" style="max-width: 300px;">
 										<br>
-										<b>These keywords should be project specific</b>
+										<div class="form-check">
+											<label for="addKeywords">Add Keywords</label>
+											<br>
+											<input type="text" name="addKeywords" class="form-control" id="addKeywords-box" placeholder="Enter keywords to be added to project" style="max-width: 300px;">
+										</div>
 										<br>
-										e.g www.client.com, @client.com, client name, etc.
-										<br>
-										<b>Keywords should be seperated by commas</b>
-										<br>
-										e.g. word, test words
-										<br>
-										<b>Append (e) to a keyword for exact matches</b>
-										<br>
-										e.g. login(e) will match 'login' or 'LOGIN' but not 'autologin'
-										<br>
-										<input type="text" name="addKeywords" class="form-control" id="addKeywords-box" placeholder="Enter keywords to be added to project" style="max-width: 300px;">
-									</div>
-								</div>
-								<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#removeCollapse" aria-expanded="false" aria-controls="removeCollapse">Remove keywords from project</button>
-								<div class="collapse" id="removeCollapse">
-									<div class="form-group">
-										<label for="removeKeywords">Remove Keywords</label>
-										<br>
-										<b>Search for a project above to view it's keywords</b>
-										<br>
-										<input type="text" name="removeKeywords" class="form-control" id="removeKeywords-box" placeholder="Enter keywords to be removed from project" style="max-width: 300px;">
-									</div>
-								</div>
-								<br><br>
-								<button type="submit" class="btn btn-primary">Submit</button>
-							</form>
-						</div>
-					</div>
-					<br><br>
-					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#deleteCollapse" aria-expanded="false" aria-controls="deleteCollapse">Remove or Deactivate a project</button>
-					<div class="collapse" id="deleteCollapse">
-						<div class="card card-body">
-							<form role="form" method="POST" action="/">
-								<div class="form-group">
-									<label for="deleteProject">Remove</label>
-									<br>
-									Deletes project data from the database.
-									<br>
-									<input type="text" name="deleteProject" class="form-control" id="deleteProject-box" placeholder="Enter project name" style="max-width: 300px;">
-									<label for="deactivateProject">Deactivate</label>
-									<br>
-									Deactivates project in the database. Project will still exist, but no new data will be gathered.
-									<br>
-									<input type="text" name="deactivateProject" class="form-control" id="deleteProject-box" placeholder="Enter project name" style="max-width: 300px;">
-								</div>
-								<button type="submit" class="btn btn-primary">Submit</button>
-							</form>
-						</div>
-					</div>
-					<br><br>
-					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#reactivateCollapse" aria-expanded="false" aria-controls="reactivateCollapse">Reactivate a project</button>
-					<div class="collapse" id="reactivateCollapse">
-						<div class="card card-body">
-							<form role="form" method="POST" action="/">
-								<div class="form-group">
-									<label for="reactivateProject">Reactivate</label>
-									<br>
-									Reactivates a currently inactive project.
-									<br>
-									<input type="text" name="reactivateProject" class="form-control" id="reactivateProject-box" placeholder="Enter project name" style="max-width: 300px;">
-								</div>
+										<div class="form-check">
+											<label for="removeKeywords">Remove Keywords</label>
+											<br>
+											Search for a project above to view it's keywords
+											<br>
+											<input type="text" name="removeKeywords" class="form-control" id="removeKeywords-box" placeholder="Enter keywords to be removed from project" style="max-width: 300px;">
+											</div>
+										</div>
 								<button type="submit" class="btn btn-primary">Submit</button>
 							</form>
 						</div>
@@ -203,75 +201,85 @@
 									<br>
 									e.g. word, test words
 									<br>
-									<b>Blank input will display current cross project keywords</b>
-									<br>
 									<input type="text" name="removeCrossProjectKeywords" class="form-control" id="removeCrossProjectKeywords-box" placeholder="Enter keywords seperated by commas" style="max-width: 300px;">
 								</div>
 								<button type="submit" class="btn btn-primary">Submit</button>
 							</form>
 						</div>
 					</div>
-					{% if additional_keywords %}
-						<br>
-						<h4>Current cross project keywords</h4>
-						{% for additional_keyword in additional_keywords %}
-							{{ additional_keyword }}<br>
-						{% endfor %}
-					{% endif %}
 				</body>
 			</div>
 			{% if results %}
 				<div class="col-sm-8">
-					<h2>{{ results.0 }}</h2>
-					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#showkwCollapse" aria-expanded="false" aria-controls="showkwCollapse">View {{ results.0 }} keywords</button>
-					<div class="collapse" id="showkwCollapse">
-						<div class="card card-body">
-							{%- for keyword in results.1 -%}
-								{{ keyword }}
-								{%- if not loop.last -%}
-									{{ ", " }}
-								{%- endif -%}
-							{%- endfor -%}
-						</div>
-					</div>
-					{% if results.2 %}
-						{% if not results.3 %}
-							<h3>Project {{ results.0 }} currently set to inactive</h3>
-						{% endif %}
-						<table class="table table-hover">
-							<thead>
-								<tr>
-									<th>URL</th>
-									<th>Keywords</th>
-								</tr>
-							</thead>
-							<tbody>
-								{% for result_dict in results.2 %}
-									<tr>
-										{% for key, value in result_dict.items() %}
-											{% if key == "found" %}
-												<td>
-													{%- for found_keyword in value -%}
-														{{ found_keyword }}
-														{%- if not loop.last -%}
-															{{ ", " }}
-														{%- endif -%}
-													{%- endfor -%}
-												</td>
-											{% else %}
-												<td>{{ value }}</td>
-											{% endif %}
-										{% endfor %}
-									</tr>
-								{% endfor %}
-							</tbody>
-						</table>
+					{% if results.0 == "listProj" %}
+						{% autoescape false %}
+							<h3>{{ results.1 }}</h3>
+							{% for active in results.2 %}
+								<h5>{{ active }}</h5>
+							{% endfor %}
+							{% for inactive in results.3 %}
+								<h5>{{ inactive }}</h5>
+							{% endfor %}
+						{% endautoescape %}
+					{% elif results.0 == 'listKw' %}
+						{% autoescape false %}
+							<h3>{{ results.1 }}</h3>
+							{% for crossKw in results.2 %}
+								<h5>{{ crossKw }}</h5>
+							{% endfor %}
+						{% endautoescape %}
 					{% else %}
-						{% if results.3 %}
-							<h3>No pastes currently discovered for project {{ results.0 }}</h3>
+						<h2>{{ results.0 }}</h2>
+						<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#showkwCollapse" aria-expanded="false" aria-controls="showkwCollapse">View {{ results.0 }} keywords</button>
+						<div class="collapse" id="showkwCollapse">
+							<div class="card card-body">
+								{%- for keyword in results.1 -%}
+									{{ keyword }}
+									{%- if not loop.last -%}
+										{{ ", " }}
+									{%- endif -%}
+								{%- endfor -%}
+							</div>
+						</div>
+						{% if results.2 %}
+							{% if not results.3 %}
+								<h3>Project {{ results.0 }} currently set to inactive</h3>
+							{% endif %}
+							<table class="table table-hover">
+								<thead>
+									<tr>
+										<th>URL</th>
+										<th>Keywords</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for result_dict in results.2 %}
+										<tr>
+											{% for key, value in result_dict.items() %}
+												{% if key == "found" %}
+													<td>
+														{%- for found_keyword in value -%}
+															{{ found_keyword }}
+															{%- if not loop.last -%}
+																{{ ", " }}
+															{%- endif -%}
+														{%- endfor -%}
+													</td>
+												{% else %}
+													<td>{{ value }}</td>
+												{% endif %}
+											{% endfor %}
+										</tr>
+									{% endfor %}
+								</tbody>
+							</table>
 						{% else %}
-							<h3>No pastes currently discovered for project {{ results.0 }}</h3>
-							<h3>Project {{ results.0 }} currently set to inactive</h3>
+							{% if results.3 %}
+								<h3>No pastes currently discovered for project {{ results.0 }}</h3>
+							{% else %}
+								<h3>No pastes currently discovered for project {{ results.0 }}</h3>
+								<h3>Project {{ results.0 }} currently set to inactive</h3>
+							{% endif %}
 						{% endif %}
 					{% endif %}
 				</div>
