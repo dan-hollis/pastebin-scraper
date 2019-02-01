@@ -12,6 +12,7 @@ from flask import Flask
 from flask import render_template
 from flask import request
 from getpass import getpass
+from glob import glob
 from sqlalchemy import func
 from threading import Thread
 
@@ -51,8 +52,10 @@ def index():
 			if 'searchProject' in request.form:
 				project_name = request.form['searchProject']
 				if not project_name:
-					option = request.form['otherSearchRadio']
-					if option == 'listProject':
+					option = request.form.getlist('otherSearchRadio')
+					if not option:
+						return render_template('index.html', messages=['No project name given<br>No options selected'])
+					if option[0] == 'listProject':
 						project_query_all = db.session.query(Projects).all()
 						if project_query_all:
 							active_projects = ['{0}'.format(pa.project_name) for pa in project_query_all if pa.active]
@@ -97,12 +100,30 @@ def index():
 					outputs = []
 					output_file_path = '{0}/{1}_{2}'.format(output_dir, project_query.project_name, datetime.now().strftime('%m%d%Y'))
 					if 'csv' in output_types or 'all' in output_types:
-						path_with_ext = '{0}.csv'.format(output_file_path)
+						file_exists = glob('{0}*.csv'.format(output_file_path))
+						if file_exists:
+							current_files = glob('{0}_*.csv'.format(output_file_path))
+							if not current_files:
+								path_with_ext = '{0}_1.csv'.format(output_file_path)
+							else:
+								newest_file = max([int(os.path.split(file)[1].split('_')[-1].split('.')[0]) for file in current_files])
+								path_with_ext = '{0}_{1}.csv'.format(output_file_path, newest_file + 1)
+						else:
+							path_with_ext = '{0}.csv'.format(output_file_path)
 						output_file = Output(path_with_ext, project_query)
 						output_file.csv_output()
 						outputs.append(path_with_ext)
 					if 'json' in output_types or 'all' in output_types:
-						path_with_ext = '{0}.json'.format(output_file_path)
+						file_exists = glob('{0}*.json'.format(output_file_path))
+						if file_exists:
+							current_files = glob('{0}_*.json'.format(output_file_path))
+							if not current_files:
+								path_with_ext = '{0}_1.json'.format(output_file_path)
+							else:
+								newest_file = max([int(os.path.split(file)[1].split('_')[-1].split('.')[0]) for file in current_files])
+								path_with_ext = '{0}_{1}.json'.format(output_file_path, newest_file + 1)
+						else:
+							path_with_ext = '{0}.json'.format(output_file_path)
 						output_file = Output(path_with_ext, project_query)
 						output_file.json_output()
 						outputs.append(path_with_ext)
@@ -158,20 +179,22 @@ def index():
 					project_query.keywords = new_keywords
 					db.session.commit()
 				return render_template('index.html', messages=['Updated project {0}'.format(project_query.project_name)])
-			elif 'delProjName' in request.form:
-				option = request.form['delRemRadio']
-				project_name = request.form['delProjName']
+			elif 'updateProjName' in request.form:
+				option = request.form.getlist('updateRadio')
+				project_name = request.form['updateProjName']
 				if not project_name:
 					return render_template('index.html', messages=['No project name given.'])
+				if not option:
+					return render_template('index.html', messages=['No status update selected'])
 				project_query = db.session.query(Projects).filter(func.lower(Projects.project_name) == project_name.lower()).first()
 				if not project_query:
 					return render_template('index.html', messages=['No data found for project {0}'.format(project_name), 'Project does not exist.'])
-				if option == 'delete':
+				if option[0] == 'delete':
 					project_id = project_query.project_id
 					Projects.query.filter_by(project_id=project_id).delete()
 					db.session.commit()
 					return render_template('index.html', messages=['Deleted project {0}'.format(project_query.project_name)])
-				elif option == 'deactivate':
+				elif option[0] == 'deactivate':
 					if not project_query.active:
 						return render_template('index.html', messages=['Project {0} is already deactivated'.format(project_query.project_name)])
 					project_query.active = False
@@ -184,7 +207,9 @@ def index():
 					db.session.commit()
 					return render_template('index.html', messages=['Reactivated project {0}'.format(project_query.project_name)])
 			elif 'addCrossProjectKeywords' in request.form:
-				keywords = [kw.strip() for kw in request.form['addCrossProjectKeywords'].split(',')]
+				if not request.form['addCrossProjectKeywords']:
+					return render_template('index.html', messages=['All fields required'])
+				keywords = list(set([kw.strip() for kw in request.form['addCrossProjectKeywords'].split(',')]))
 				if '' in keywords:
 					return render_template('index.html', messages=['No blanks allowed in keywords<br>e.g. word1, ,word2'])
 				cross_project_query = db.session.query(AdditionalKeywords).filter(AdditionalKeywords.additional_keyword_id == 1).first()
@@ -193,24 +218,22 @@ def index():
 					db.session.add(additional_keywords)
 					db.session.commit()
 					return render_template('index.html', messages=['Updated cross project keywords'])
-				current_additional_keywords = cross_project_query.additional_keywords
-				if not request.form['addCrossProjectKeywords']:
-					return render_template('index.html', messages=['All fields required'])
-				current_additional_keywords = current_additional_keywords + [kw for kw in keywords if kw not in current_additional_keywords]
+				current_additional_keywords = cross_project_query.additional_keywords + [kw for kw in keywords if kw not in cross_project_query.additional_keywords]
 				cross_project_query.additional_keywords = current_additional_keywords
 				db.session.commit()
 				return render_template('index.html', messages=['Updated cross project keywords'])
 			elif 'removeCrossProjectKeywords' in request.form:
+				if not request.form['removeCrossProjectKeywords']:
+					return render_template('index.html', messages=['All fields required'])
 				keywords = [kw.strip() for kw in request.form['removeCrossProjectKeywords'].split(',')]
 				cross_project_query = db.session.query(AdditionalKeywords).filter(AdditionalKeywords.additional_keyword_id == 1).first()
 				current_additional_keywords = cross_project_query.additional_keywords
 				if not cross_project_query or not current_additional_keywords:
 					return render_template('index.html', messages=['No cross project keywords found.'])
-				if not request.form['removeCrossProjectKeywords']:
-					return render_template('index.html', messages=['All fields required'])
 				if not set(keywords).issubset(current_additional_keywords):
 					not_found = [kw.strip() for kw in keywords if kw not in current_additional_keywords]
-					return render_template('index.html', messages=['Cross project keywords were entered to be removed that do not exist in the database', '<br>'.join(not_found)])
+					results = ['listKw', 'Current cross project keywords:<br>', current_additional_keywords]
+					return render_template('index.html', results=results, messages=['Cross project keywords were entered to be removed that do not exist in the database', '<br>'.join(not_found)])
 				current_additional_keywords = [kw for kw in current_additional_keywords if kw not in keywords]
 				cross_project_query.additional_keywords = current_additional_keywords
 				db.session.commit()
