@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
 
-# Convert pastebin timestamp to readable date
-# Below print 2019-01-07 23:35:55
-#from datetime import datetime
-#ts = int('1546904155')
-#print(datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S'))
-
-
 import json
 import requests
 
@@ -27,17 +20,6 @@ def get_pastes(scrape_history):
 			date = paste['date']
 			if paste_key not in paste_keys and paste_key not in scrape_history:
 				paste_keys.append(paste_key)
-				"""
-				if paste_key not in scrape_history_keys:
-					scrape_history_keys.append(paste_key)
-					paste_data.append([paste_key, user, date])
-				else:
-					scrape_history_index = scrape_history_keys.index(paste_key)
-					if date > scrape_history[scrape_history_index][2]:
-						scrape_history.pop(scrape_history_index)
-						scrape_history_keys.pop(scrape_history_index)
-						paste_data.append([paste_key, user, date])
-				"""
 		return paste_keys
 	except json.decoder.JSONDecodeError:
 		# No new paste data was retrieved

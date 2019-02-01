@@ -3,7 +3,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import JSON
-#from sqlalchemy.types import Boolean
 
 db = SQLAlchemy()
 
