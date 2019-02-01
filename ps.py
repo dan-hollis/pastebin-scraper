@@ -59,14 +59,14 @@ def index():
 							inactive_projects = ['{0} (inactive)'.format(pi.project_name) for pi in project_query_all if not pi.active]
 							results = ['listProj', 'Currently exisiting project names:<br>', active_projects, inactive_projects]
 							return render_template('index.html', results=results)
-						return render_template('index.html', results=['list', 'No projects currently exist.'])
+						return render_template('index.html', results=['listProj', 'No projects currently exist.'])
 					else:
 						cross_project_query = db.session.query(AdditionalKeywords).filter(AdditionalKeywords.additional_keyword_id == 1).first()
 						current_additional_keywords = cross_project_query.additional_keywords
 						results = ['listKw', 'Current cross project keywords:<br>', current_additional_keywords]
 						if current_additional_keywords:
 							return render_template('index.html', results=results)
-						return render_template('index.html', results=['list', 'No cross project keywords currently exist.'])
+						return render_template('index.html', results=['listKw', 'No cross project keywords currently exist.'])
 				project_query = db.session.query(Projects).filter(func.lower(Projects.project_name) == project_name.lower()).first()
 				if not project_query:
 					return render_template('index.html', messages=['No data found for project {0}'.format(project_name), 'Project does not exist.'])
@@ -195,7 +195,7 @@ def index():
 				current_additional_keywords = cross_project_query.additional_keywords
 				if not request.form['addCrossProjectKeywords']:
 					return render_template('index.html', messages=['All fields required'])
-				current_additional_keywords = current_additional_keywords + [new_add_kw for new_add_kw in keywords if new_add_kw not in current_additional_keywords]
+				current_additional_keywords = current_additional_keywords + [kw for kw in keywords if kw not in current_additional_keywords]
 				cross_project_query.additional_keywords = current_additional_keywords
 				db.session.commit()
 				return render_template('index.html', messages=['Updated cross project keywords'])
@@ -208,8 +208,9 @@ def index():
 				if not request.form['removeCrossProjectKeywords']:
 					return render_template('index.html', messages=['All fields required'])
 				if not set(keywords).issubset(current_additional_keywords):
-					return render_template('index.html', messages=['Cross project keywords were entered to be removed that do not exist in the database'])
-				current_additional_keywords = [new_add_kw for new_add_kw in current_additional_keywords if new_add_kw not in keywords]
+					not_found = [kw.strip() for kw in keywords if kw not in current_additional_keywords]
+					return render_template('index.html', messages=['Cross project keywords were entered to be removed that do not exist in the database', '<br>'.join(not_found)])
+				current_additional_keywords = [kw for kw in current_additional_keywords if kw not in keywords]
 				cross_project_query.additional_keywords = current_additional_keywords
 				db.session.commit()
 				return render_template('index.html', messages=['Updated cross project keywords'])
@@ -219,13 +220,14 @@ def index():
 
 if __name__ == '__main__':
 	try:
-		print('Starting scraper...')
-		scrape_thread = Thread(target=run_scraper, args=(database_config, scraper_config))
-		scrape_thread.daemon = True
-		scrape_thread.start()
+		print('Scraping...')
 		if flask_config['env'] == 'dev':
+			scrape_thread = Thread(target=run_scraper, args=(database_config, scraper_config))
+			scrape_thread.daemon = True
+			scrape_thread.start()
 			app.run(debug=False, host=flask_config['host'], port=flask_config['port'])
-		scrape_thread.join()
+		else:
+			run_scraper(database_config, scraper_config)
 		sys.exit('\nExiting...')
 	except KeyboardInterrupt:
 		sys.exit('\nExiting...')
