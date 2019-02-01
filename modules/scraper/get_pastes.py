@@ -47,6 +47,8 @@ def get_pastes(scrape_history):
 		return None
 	except gaierror:
 		raise
+	except KeyboardInterrupt:
+		raise
 	except:
 		print('{1}{2}[!] Unhandled error occured in modules.scraper.get_pastes.get_pastes{0}'.format(colors.RESET, colors.BOLD, colors.RED))
 		raise

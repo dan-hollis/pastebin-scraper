@@ -32,6 +32,7 @@ class Output:
 			found_keywords = self.project.found_keywords
 			json_data = {'project_name': project_name, 'project_id': project_id, 'found_keywords': found_keywords}
 			with open(self.output_file, 'w') as write_output:
-				json.dump(json_data, write_output)
+				json.dump(json_data, write_output, indent=2)
+				write_output.write('\n')
 		except:
 			raise

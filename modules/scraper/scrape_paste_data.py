@@ -42,6 +42,8 @@ def scrape_paste_data(project, additional_keywords, paste_key):
 		return None
 	except gaierror:
 		raise
+	except KeyboardInterrupt:
+		raise
 	except:
 		print('{1}{2}[!] Unhandled error occured in modules.scraper.scrape_paste_data.scrape_paste_data{0}'.format(colors.RESET, colors.BOLD, colors.RED))
 		raise

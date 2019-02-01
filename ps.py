@@ -74,15 +74,16 @@ def index():
 				return render_template('index.html', results=results)
 			elif 'outputProject' in request.form:
 				project_name = request.form['outputProject']
+				output_types = request.form.getlist('outputCheck')
 				if not project_name:
 					return render_template('index.html', messages=['No project name supplied'])
-				if not request.form['csv'] and not request.form['json']:
-					return render_template('index.html', messages=['No output types selected'])
+				if not output_types:
+					return render_template('index.html', messages=['No output type selected'])
 				project_query = db.session.query(Projects).filter(func.lower(Projects.project_name) == project_name.lower()).first()
 				if not project_query:
 					return render_template('index.html', messages=['No data found for project {0}'.format(project_name), 'Project does not exist.'])
 				if not project_query.found_keywords:
-					return render_template('index.html', messages=['No data found for project {0}'.format(project_name)])
+					return render_template('index.html', messages=['No data found for project {0}'.format(project_query.project_name)])
 				try:
 					if flask_config['env'] == 'prod':
 						output_dir = ('/var/www/pastebin-scraper/outputs/{0}'.format(project_query.project_name))
@@ -95,12 +96,12 @@ def index():
 						os.makedirs(output_dir)
 					outputs = []
 					output_file_path = '{0}/{1}_{2}'.format(output_dir, project_query.project_name, datetime.now().strftime('%m%d%Y'))
-					if request.form['csv']:
+					if 'csv' in output_types or 'all' in output_types:
 						path_with_ext = '{0}.csv'.format(output_file_path)
 						output_file = Output(path_with_ext, project_query)
 						output_file.csv_output()
 						outputs.append(path_with_ext)
-					if request.form['json']:
+					if 'json' in output_types or 'all' in output_types:
 						path_with_ext = '{0}.json'.format(output_file_path)
 						output_file = Output(path_with_ext, project_query)
 						output_file.json_output()

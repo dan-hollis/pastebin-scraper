@@ -45,8 +45,10 @@ def scraper(projects, static_data, db, history_limit):
 		print('{1}{2}[!] Retrying in 60 seconds...{0}\n'.format(colors.RESET, colors.BOLD, colors.RED))
 		sleep(60)
 		return
+	except KeyboardInterrupt:
+		raise
 	except:
-		print('{1}{2}[!] Unhandled error occured in modules.scraper.run_scraper.scraper{0}'.format(colors.RESET, colors.BOLD, colors.RED))
+		print('{1}{2}[!] Unhandled error occured in modules.scraper.core.scraper{0}'.format(colors.RESET, colors.BOLD, colors.RED))
 		raise
 
 def run_scraper(database_config, scraper_config):
@@ -63,6 +65,8 @@ def run_scraper(database_config, scraper_config):
 						projects.append({'project_id': project_data[0], 'project_name': project_data[1], 
 							'keywords': project_data[2], 'found_keywords': project_data[3]})
 				scraper(projects, static_data, db, history_limit)
+		except KeyboardInterrupt:
+			raise
 		except:
 			print('{1}{2}[!] Error occurred in scraping thread. Scraper is no longer running.{0}'.format(colors.RESET, colors.BOLD, colors.RED))
 			print(''.join(traceback.format_exception(*sys.exc_info())))
