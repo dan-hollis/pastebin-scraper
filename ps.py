@@ -143,7 +143,7 @@ def index():
 				if project_query:
 					results = [project_query.project_name, project_query.keywords, project_query.found_keywords, project_query.active]
 					return render_template('index.html', results=results, messages=['error', ['Project {0} already exists'.format(results[0])]])
-				project = Projects(project_name, keywords, [], active=True)
+				project = Projects(project_name, list(sorted(set(keywords))), [], active=True)
 				db.session.add(project)
 				db.session.commit()
 				return render_template('index.html', messages=['info', ['Created project {0}'.format(project_name)]])
@@ -169,19 +169,19 @@ def index():
 				current_keywords = project_query.keywords
 				if add_keywords:
 					current_keywords = current_keywords + [add_kw for add_kw in add_keywords if add_kw not in current_keywords]
-					project_query.keywords = current_keywords
+					project_query.keywords = list(sorted(set(current_keywords)))
 					db.session.commit()
 				if remove_keywords:
 					if not set(remove_keywords).issubset(current_keywords):
 						return render_template('index.html', messages=['error', ['Keywords were entered to be removed that do not exist for project {0}', 
 							'Search for the project to check it\'s keywords.'.format(project_query.project_name)]])
-					new_keywords = [new_kw for new_kw in current_keywords if new_kw not in remove_keywords]
-					project_query.keywords = new_keywords
+					new_keywords = [remove_kw for remove_kw in current_keywords if remove_kw not in remove_keywords]
+					project_query.keywords = sorted(new_keywords)
 					db.session.commit()
 				return render_template('index.html', messages=['info', ['Updated project {0}'.format(project_query.project_name)]])
-			elif 'updateProjName' in request.form:
-				option = request.form.getlist('updateRadio')
-				project_name = request.form['updateProjName']
+			elif 'updateProjStatus' in request.form:
+				option = request.form.getlist('updateStatusRadio')
+				project_name = request.form['updateProjStatus']
 				if not project_name:
 					return render_template('index.html', messages=['error', ['No project name given']])
 				if not option:
@@ -209,7 +209,7 @@ def index():
 			elif 'addCrossProjectKeywords' in request.form:
 				if not request.form['addCrossProjectKeywords']:
 					return render_template('index.html', messages=['error', ['All fields required']])
-				keywords = list(set([kw.strip() for kw in request.form['addCrossProjectKeywords'].split(',')]))
+				keywords = list(sorted(set([kw.strip() for kw in request.form['addCrossProjectKeywords'].split(',')])))
 				if '' in keywords:
 					return render_template('index.html', messages=['error', ['No blanks allowed in keywords', 'e.g. word1, ,word2']])
 				cross_project_query = db.session.query(AdditionalKeywords).filter(AdditionalKeywords.additional_keyword_id == 1).first()
@@ -219,7 +219,7 @@ def index():
 					db.session.commit()
 					return render_template('index.html', messages=['info', ['Updated cross project keywords']])
 				current_additional_keywords = cross_project_query.additional_keywords + [kw for kw in keywords if kw not in cross_project_query.additional_keywords]
-				cross_project_query.additional_keywords = current_additional_keywords
+				cross_project_query.additional_keywords = list(sorted(set(current_additional_keywords)))
 				db.session.commit()
 				return render_template('index.html', messages=['info', ['Updated cross project keywords']])
 			elif 'removeCrossProjectKeywords' in request.form:

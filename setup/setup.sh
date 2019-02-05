@@ -79,8 +79,6 @@ echo -e "${GREEN}[*] Done${RESET}";echo
 echo -e "${YELLOW}[*] Setting up pip...${RESET}"
 cd "$script_path/.."
 wget -N https://bootstrap.pypa.io/get-pip.py
-python3 get-pip.py
-rm -f get-pip.py
 python3 -m pip install --upgrade setuptools wheel pip
 echo -e "${GREEN}[*] Done${RESET}";echo
 
@@ -102,6 +100,8 @@ echo -e "${GREEN}[*] Done${RESET}";echo
 
 # pip installs
 echo -e "${YELLOW}[*] Setting up python dependencies...${RESET}"
+python3 get-pip.py
+rm -f get-pip.py
 python3 -m pip install --upgrade setuptools wheel pip
 python3 -m pip install pycairo
 python3 -m pip install -r requirements.txt
