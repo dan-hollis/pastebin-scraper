@@ -48,8 +48,8 @@ echo -e "${GREEN}[*] Done${RESET}";echo
 echo -e "${YELLOW}[*] Setting up the database...${RESET}"
 cd ~postgres/
 check_database=$(sudo -u postgres psql -c "\\l" | grep pastebin_scraper)
+continue_setup=""
 if [ ! -z "$check_database" ]; then
-	continue_setup=""
 	while [ -z "$continue_setup" ]; do
 		echo;echo -e "${BOLD}${RED}[!] Database ${RESET}pastebin_scraper ${BOLD}${RED}already exists.${RESET}"
 		echo -e "${BOLD}${YELLOW}[?] Do you want to wipe the database before continuing setup?${RESET}"
@@ -69,6 +69,7 @@ if [ ! -z "$check_database" ]; then
 else
 	sudo -u postgres psql -c "drop database pastebin_scraper" >/dev/null 2>&1
 	sudo -u postgres psql -c "create database pastebin_scraper" >/dev/null 2>&1
+	sudo -u postgres psql -c "drop user scraper" >/dev/null 2>&1
 	sudo -u postgres psql -c "create user scraper with encrypted password '$password'" >/dev/null 2>&1
 	sudo -u postgres psql -c "grant all privileges on database pastebin_scraper to scraper" >/dev/null 2>&1
 fi
@@ -108,14 +109,25 @@ echo -e "${GREEN}[*] Done${RESET}";echo
 
 # Initialize the database
 echo -e "${YELLOW}[*] Initializing the database...${RESET}"
-cd modules/flask/
-rm -rf migrations
-python3 manage.py db init
-initialized=0
-migrated=0
-while [ $initialized -eq 0 ]; do
-	if [ $migrated -eq 0 ]; then
-		echo;python3 manage.py db migrate
+if [ "$continue_setup" = "y" ] || [ -z "$check_database" ]; then
+	cd modules/flask/
+	rm -rf migrations
+	python3 manage.py db init
+	initialized=0
+	migrated=0
+	while [ $initialized -eq 0 ]; do
+		if [ $migrated -eq 0 ]; then
+			echo;python3 manage.py db migrate
+			ret_code=$?
+			if [ $ret_code -ne 0 ]; then
+				echo;echo -e "${RED}[!] Error initializing the database.${RESET}"
+				echo -e "${YELLOW}[!] If you see ${RESET}'FATAL:  password authentication failed for user \"scraper\"'${YELLOW} above, you entered your password wrong.${RESET}"
+				echo -e "${YELLOW}[!] Anything else is an unhandled error. Restarting database initialization...${RESET}";echo
+				continue
+			fi
+			migrated=1
+		fi
+		echo;python3 manage.py db upgrade
 		ret_code=$?
 		if [ $ret_code -ne 0 ]; then
 			echo;echo -e "${RED}[!] Error initializing the database.${RESET}"
@@ -123,18 +135,9 @@ while [ $initialized -eq 0 ]; do
 			echo -e "${YELLOW}[!] Anything else is an unhandled error. Restarting database initialization...${RESET}";echo
 			continue
 		fi
-		migrated=1
-	fi
-	echo;python3 manage.py db upgrade
-	ret_code=$?
-	if [ $ret_code -ne 0 ]; then
-		echo;echo -e "${RED}[!] Error initializing the database.${RESET}"
-		echo -e "${YELLOW}[!] If you see ${RESET}'FATAL:  password authentication failed for user \"scraper\"'${YELLOW} above, you entered your password wrong.${RESET}"
-		echo -e "${YELLOW}[!] Anything else is an unhandled error. Restarting database initialization...${RESET}";echo
-		continue
-	fi
-	initialized=1
-done
+		initialized=1
+	done
+fi
 echo -e "${GREEN}[*] Done${RESET}";echo
 
 # Store the flask secret key
