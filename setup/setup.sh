@@ -41,8 +41,6 @@ apt-get update
 apt-get install -y postgresql postgresql-contrib libpq-dev apache2-dev libapache2-mod-wsgi-py3 python3-dev python3-distutils-extra python3-dbus python-apt libsystemd-dev libglib2.0-dev libgirepository1.0-dev libcairo2-dev
 service apache2 restart
 a2enmod wsgi >/dev/null 2>&1
-mkdir -p /var/www/pastebin-scraper
-chown -R www-data:www-data /var/www/pastebin-scraper/
 service postgresql start
 echo -e "${GREEN}[*] Done${RESET}";echo
 
@@ -59,6 +57,7 @@ if [ ! -z "$check_database" ]; then
 		if [ "$continue_setup" = "y" ]; then
 			sudo -u postgres psql -c "drop database pastebin_scraper" >/dev/null 2>&1
 			sudo -u postgres psql -c "create database pastebin_scraper" >/dev/null 2>&1
+			sudo -u postgres psql -c "drop user scraper" >/dev/null 2>&1
 			sudo -u postgres psql -c "create user scraper with encrypted password '$password'" >/dev/null 2>&1
 			sudo -u postgres psql -c "grant all privileges on database pastebin_scraper to scraper" >/dev/null 2>&1
 		elif [ "$continue_setup" = "n" ]; then
@@ -145,7 +144,45 @@ secret_key=$(python3 -c "import os; print(os.urandom(24).hex())")
 sed -i "8s/.*/secret_key=$secret_key/" config.ini
 echo -e "${GREEN}[*] Done${RESET}";echo
 
-echo -e "${GREEN}[*] Setup has completed.${RESET}";echo
+apache_setup=""
+while [ -z "$apache_setup" ]; do
+	echo -e "${BOLD}${YELLOW}[?] Attempt deployment to Apache?${RESET}"
+	read -p "(y/n): " apache_setup
+	if [ "$apache_setup" = "y" ]; then
+		echo -e "${YELLOW}[*] Attempting deployment to Apache...\n${RESET}"
+		cd "$script_path/apache"
+		pastebin_scraper_dir="$(cd "$script_path/.."; pwd -P)"
+		# Setup ps.wsgi
+		echo -e "${YELLOW}[*] Editing and copying setup/apache/ps.wsgi to /var/www/pastebin-scraper...${RESET}"
+		mkdir -p /var/www/pastebin-scraper
+		activate_this="'$pastebin_scraper_dir/env/bin/activate_this.py'"
+		cp ps.wsgi ps.wsgi.tmp
+		sed -i "8s@.*@sys.path.append('$pastebin_scraper_dir')@" ps.wsgi.tmp
+		sed -i "12s@.*@activate_this = $activate_this@" ps.wsgi.tmp
+		mv ps.wsgi.tmp /var/www/pastebin-scraper/ps.wsgi
+		chown -R www-data:www-data /var/www/pastebin-scraper/
+		echo -e "${GREEN}[*] Done${RESET}"
+		# Setup pastebin-scraper.com.conf
+		echo -e "${YELLOW}[*] Editing and copying setup/apache/pastebin-scraper.com.conf to /etc/apache2/sites-available...${RESET}"
+		wsgi_daemon_process="WSGIDaemonProcess ps user=www-data group=www-data threads=5 home=/var/www/pastebin-scraper python-path=$pastebin_scraper_dir:$pastebin_scraper_dir/env/lib64/python3.6/site-packages:$pastebin_scraper_dir/env/lib/python3.6/site-packages"
+		cp pastebin-scraper.com.conf pastebin-scraper.com.conf.tmp
+		sed -i "7s@.*@$wsgi_daemon_process@" pastebin-scraper.com.conf.tmp
+		mv pastebin-scraper.com.conf.tmp /etc/apache2/sites-available/pastebin-scraper.com.conf
+		echo -e "${GREEN}[*] Done${RESET}"
+		echo -e "${YELLOW}[*] Enabling site pastebin-scraper.com...${RESET}"
+		a2ensite pastebin-scraper.com >/dev/null 2>&1
+		systemctl reload apache2
+		echo -e "${GREEN}[*] Done\n${RESET}"
+		echo -e "${GREEN}[*] Completed deployment attempt. Site should be available at pastebin-scraper.com${RESET}"
+		echo -e "${YELLOW}[*] Check /var/log/apache2/error.log for error info.${RESET}"
+	elif [ "$apache_setup" = "n" ]; then
+		break
+	else
+		apache_setup=""
+	fi
+done
+
+echo -e "\n${GREEN}[*] Setup has completed.${RESET}"
 echo -e "${YELLOW}[*] The python virtual environment must be activated before running ps.py${RESET}"
 echo -e "${YELLOW}[*] Run the command below from the pastebin-scraper root directory to activate the virtual environment:${RESET}"
 echo -e "\tsource env/bin/activate"

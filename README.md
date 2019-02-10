@@ -34,6 +34,8 @@ The `history_limit` option of the [scraper] section in config.ini will control h
 
 Apache dependencies are installed through the setup script, and deployment has been tested using the following steps. If set up works properly and you have DNS set up correctly, you should be able to hit the scraper at pastebin-scraper.com.
 
+**NOTE**: Deployment can also be attempted through the setup script.
+
 ### 1. Edit [flask] section of config.ini
 *Location*: pastebin-scraper/config.ini
 
@@ -50,6 +52,7 @@ Apache dependencies are installed through the setup script, and deployment has b
 The lines that have to be changed are noted in the file. After making necessary changes run the following command:
 
 ```
+mkdir -p /var/www/pastebin-scraper
 cp pastebin-scraper/setup/apache/ps.wsgi /var/www/pastebin-scraper
 chown -R www-data:www-data /var/www/pastebin-scraper
 ```

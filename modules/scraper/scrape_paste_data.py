@@ -18,7 +18,7 @@ def scrape_paste_data(project, additional_keywords, paste_key):
 		checked_additional = False
 		for keyword in project['keywords']:
 			if keyword.endswith('(e)'):
-				keyword_regex = r'\b{0}\b'.format(keyword[:-4])
+				keyword_regex = r'\b{0}\b'.format(keyword[:-3])
 			else:
 				keyword_regex = keyword
 			if re.findall(keyword_regex, paste_data, flags=re.IGNORECASE):
@@ -26,7 +26,7 @@ def scrape_paste_data(project, additional_keywords, paste_key):
 				if additional_keywords and not checked_additional:
 					for additional_keyword in additional_keywords:
 						if additional_keyword.endswith('(e)'):
-							additional_keyword_regex = r'\b{0}\b'.format(additional_keyword[:-4])
+							additional_keyword_regex = r'\b{0}\b'.format(additional_keyword[:-3])
 						else:
 							additional_keyword_regex = additional_keyword
 						if re.findall(additional_keyword_regex, paste_data, flags=re.IGNORECASE):
