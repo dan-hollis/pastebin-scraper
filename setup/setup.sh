@@ -79,6 +79,7 @@ echo -e "${GREEN}[*] Done${RESET}";echo
 echo -e "${YELLOW}[*] Setting up pip...${RESET}"
 cd "$script_path/.."
 wget -N https://bootstrap.pypa.io/get-pip.py
+python3 get-pip.py
 python3 -m pip install --upgrade setuptools wheel pip
 echo -e "${GREEN}[*] Done${RESET}";echo
 
@@ -175,6 +176,9 @@ while [ -z "$apache_setup" ]; do
 		echo -e "${YELLOW}[*] Enabling site pastebin-scraper.com...${RESET}"
 		a2ensite pastebin-scraper.com >/dev/null 2>&1
 		systemctl reload apache2
+		cd "$script_path/.."
+		sed -i "11s/.*/env=prod/" config.ini
+		sed -i "12s/.*/password=$password/" config.ini
 		echo -e "${GREEN}[*] Done\n${RESET}"
 		echo -e "${GREEN}[*] Completed deployment attempt. Site should be available at pastebin-scraper.com${RESET}"
 		echo -e "${YELLOW}[*] Check /var/log/apache2/error.log for error info.${RESET}"
