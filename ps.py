@@ -65,9 +65,9 @@ def index():
 						return render_template('index.html', results=['listProj', 'No projects currently exist'])
 					else:
 						cross_project_query = db.session.query(AdditionalKeywords).filter(AdditionalKeywords.additional_keyword_id == 1).first()
-						current_additional_keywords = cross_project_query.additional_keywords
-						results = ['listKw', 'Current cross project keywords:', current_additional_keywords]
-						if current_additional_keywords:
+						if cross_project_query:
+							current_additional_keywords = cross_project_query.additional_keywords
+							results = ['listKw', 'Current cross project keywords:', current_additional_keywords]
 							return render_template('index.html', results=results)
 						return render_template('index.html', results=['listKw', 'No cross project keywords currently exist'])
 				project_query = db.session.query(Projects).filter(func.lower(Projects.project_name) == project_name.lower()).first()
