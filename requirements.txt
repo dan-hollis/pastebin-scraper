@@ -27,7 +27,7 @@ jsonpointer==2.0
 jsonschema==2.6.0
 Mako==1.0.7
 MarkupSafe==1.1.0
-mod-wsgi==4.6.5
+mod-wsgi==4.9.3
 netifaces==0.10.9
 oauthlib==3.0.1
 pam==0.1.4
