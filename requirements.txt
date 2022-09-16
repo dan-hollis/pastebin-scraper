@@ -25,7 +25,7 @@ Jinja2>=2.10.1
 jsonpatch==1.23
 jsonpointer==2.0
 jsonschema==2.6.0
-Mako==1.0.7
+Mako==1.2.2
 MarkupSafe==1.1.0
 mod-wsgi==4.6.5
 netifaces==0.10.9
